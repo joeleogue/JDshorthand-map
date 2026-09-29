@@ -22,7 +22,6 @@ center: [150, -20],
 zoom: 1.4,
 renderWorldCopies: false
 });
-map.addControl(new maplibregl.NavigationControl(),'top-right');
 map.on('load',()=>{
 map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
 map.addLayer({id:'route-line',type:'line',source:'route',paint:{'line-color':'#0078D4','line-width':5}});
