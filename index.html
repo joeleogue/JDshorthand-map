@@ -9,19 +9,24 @@
 <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
 
 <style>
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #map {
   width: 100%;
-  height: 800px;
+  height: 80vh;
+  min-height: 700px;
 }
 
 @media (max-width: 768px) {
   #map {
     height: 500px;
+    min-height: 500px;
   }
 }
 </style>
@@ -49,11 +54,11 @@ const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   center: [85, 0],
-  zoom: isMobile ? 0.3 : 1.6,
+  zoom: isMobile ? 0.7 : 1.6,
   renderWorldCopies: false
 });
 
-/* disable all interactions */
+/* Lock all interactions */
 map.scrollZoom.disable();
 map.boxZoom.disable();
 map.dragPan.disable();
@@ -62,7 +67,16 @@ map.keyboard.disable();
 map.doubleClickZoom.disable();
 map.touchZoomRotate.disable();
 
+/* Fix Shorthand iframe resizing */
+window.addEventListener('resize', () => {
+  map.resize();
+});
+
 map.on('load', () => {
+
+  setTimeout(() => {
+    map.resize();
+  }, 500);
 
   map.addSource('route', {
     type: 'geojson',
@@ -102,7 +116,7 @@ map.on('load', () => {
     source: 'head',
     paint: {
       'circle-radius': isMobile ? 6 : 8,
-      'circle-color': '#d83b01'
+      'circle-color': '#D83B01'
     }
   });
 
@@ -167,7 +181,6 @@ map.on('load', () => {
   animate();
 
 });
-
 </script>
 
 </body>
