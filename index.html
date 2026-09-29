@@ -15,7 +15,13 @@ html,body{margin:0;padding:0;height:100%;font-family:sans-serif;}
 <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
 <script>
 const route=[[-8.492110492347729,51.89346672223707],[20,40],[80,10],[140,-20],[178.7671865694536,-49.688154086945886]];
-const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',center:[85,0],zoom:1.5});
+const map = new maplibregl.Map({
+container: 'map',
+style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+center: [150, -20],
+zoom: 1.4,
+renderWorldCopies: false
+});
 map.addControl(new maplibregl.NavigationControl(),'top-right');
 map.on('load',()=>{
 map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
