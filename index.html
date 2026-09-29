@@ -15,12 +15,14 @@ html,body{margin:0;padding:0;height:100%;font-family:sans-serif;}
 <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
 <script>
 const route=[[-8.492110492347729,51.89346672223707],[20,40],[80,10],[140,-20],[178.7671865694536,-49.688154086945886]];
+const isMobile = window.innerWidth < 768;
+
 const map = new maplibregl.Map({
-container: 'map',
-style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-center: [150, -20],
-zoom: 1.4,
-renderWorldCopies: false
+  container: 'map',
+  style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  center: isMobile ? [140, -10] : [165, -20],
+  zoom: isMobile ? 0.7 : 1.4,
+  renderWorldCopies: false
 });
 map.on('load',()=>{
 map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
@@ -28,7 +30,17 @@ map.addLayer({id:'route-line',type:'line',source:'route',paint:{'line-color':'#0
 map.addSource('head',{type:'geojson',data:{type:'Feature',geometry:{type:'Point',coordinates:route[0]}}});
 map.addLayer({id:'head-dot',type:'circle',source:'head',paint:{'circle-radius':7,'circle-color':'#d83b01'}});
 map.fitBounds([[-8.492110492347729,-49.688154086945886],[178.7671865694536,51.89346672223707]],{padding:60});
-function update(progress){
+function update(progress){if (progress > 0.75) {
+ 
+const zoomProgress = (progress - 0.75) / 0.25;
+ 
+map.easeTo({
+center: [178.7671865694536, -49.688154086945886],
+zoom: 3 + (zoomProgress * 3),
+duration: 0
+});
+ 
+}
 const total=route.length-1;
 const current=progress*total;
 const seg=Math.floor(current);
