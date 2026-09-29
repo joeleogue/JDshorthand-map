@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shorthand Route Animation</title>
+<link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+html,body{margin:0;padding:0;height:100%;font-family:sans-serif;}
+#map{position:sticky;top:0;height:100vh;width:100%;}
+#spacer{height:300vh;}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="spacer"></div>
+<script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
+<script>
+const route=[[-8.492110492347729,51.89346672223707],[20,40],[80,10],[140,-20],[178.7671865694536,-49.688154086945886]];
+const map=new maplibregl.Map({container:'map',style:'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',center:[85,0],zoom:1.5});
+map.addControl(new maplibregl.NavigationControl(),'top-right');
+map.on('load',()=>{
+map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
+map.addLayer({id:'route-line',type:'line',source:'route',paint:{'line-color':'#0078D4','line-width':5}});
+map.addSource('head',{type:'geojson',data:{type:'Feature',geometry:{type:'Point',coordinates:route[0]}}});
+map.addLayer({id:'head-dot',type:'circle',source:'head',paint:{'circle-radius':7,'circle-color':'#d83b01'}});
+map.fitBounds([[-8.492110492347729,-49.688154086945886],[178.7671865694536,51.89346672223707]],{padding:60});
+function update(progress){
+const total=route.length-1;
+const current=progress*total;
+const seg=Math.floor(current);
+const rem=current-seg;
+let coords=route.slice(0,seg+1);
+let head=route[Math.min(seg,total)];
+if(seg<total){const s=route[seg],e=route[seg+1];head=[s[0]+(e[0]-s[0])*rem,s[1]+(e[1]-s[1])*rem];coords.push(head);} 
+map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:coords}});
+map.getSource('head').setData({type:'Feature',geometry:{type:'Point',coordinates:head}});
+}
+window.addEventListener('scroll',()=>{
+const max=document.documentElement.scrollHeight-window.innerHeight;
+const p=Math.max(0,Math.min(1,window.scrollY/max));
+update(p);
+});
+});
+</script>
+</body>
+</html>
