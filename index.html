@@ -19,6 +19,7 @@ const map = new maplibregl.Map({
 container: 'map',
 style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
 renderWorldCopies: false
+interactive: false
 });
 map.on('load',()=>{
 map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
