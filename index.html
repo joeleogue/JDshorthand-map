@@ -15,14 +15,10 @@ html,body{margin:0;padding:0;height:100%;font-family:sans-serif;}
 <script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
 <script>
 const route=[[-8.492110492347729,51.89346672223707],[20,40],[80,10],[140,-20],[178.7671865694536,-49.688154086945886]];
-const isMobile = window.innerWidth < 768;
-
 const map = new maplibregl.Map({
-  container: 'map',
-  style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  center: isMobile ? [140, -10] : [165, -20],
-  zoom: isMobile ? 0.7 : 1.4,
-  renderWorldCopies: false
+container: 'map',
+style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+renderWorldCopies: false
 });
 map.on('load',()=>{
 map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[route[0]]}}});
@@ -31,32 +27,61 @@ map.addSource('head',{type:'geojson',data:{type:'Feature',geometry:{type:'Point'
 map.addLayer({id:'head-dot',type:'circle',source:'head',paint:{'circle-radius':7,'circle-color':'#d83b01'}});
 map.fitBounds(
 [
-[-12, -55],
+[-5, -55],
 [180, 60]
 ],
 {
 padding: {
 top: 20,
 bottom: 20,
-left: 20,
-right: 100
+left: 40,
+right: 180
 }
 }
 );
-const total=route.length-1;
-const current=progress*total;
-const seg=Math.floor(current);
-const rem=current-seg;
-let coords=route.slice(0,seg+1);
-let head=route[Math.min(seg,total)];
-if(seg<total){const s=route[seg],e=route[seg+1];head=[s[0]+(e[0]-s[0])*rem,s[1]+(e[1]-s[1])*rem];coords.push(head);} 
-map.getSource('route').setData({type:'Feature',geometry:{type:'LineString',coordinates:coords}});
-map.getSource('head').setData({type:'Feature',geometry:{type:'Point',coordinates:head}});
+function update(progress){
+
+  const total = route.length - 1;
+  const current = progress * total;
+  const seg = Math.floor(current);
+  const rem = current - seg;
+
+  let coords = route.slice(0, seg + 1);
+  let head = route[Math.min(seg, total)];
+
+  if (seg < total) {
+    const s = route[seg];
+    const e = route[seg + 1];
+
+    head = [
+      s[0] + (e[0] - s[0]) * rem,
+      s[1] + (e[1] - s[1]) * rem
+    ];
+
+    coords.push(head);
+  }
+
+  map.getSource('route').setData({
+    type:'Feature',
+    geometry:{
+      type:'LineString',
+      coordinates:coords
+    }
+  });
+
+  map.getSource('head').setData({
+    type:'Feature',
+    geometry:{
+      type:'Point',
+      coordinates:head
+    }
+  });
+
 }
 let progress = 0;
  
 function animate() {
-progress += 0.003;
+progress += 0.002;
  
 if (progress > 1) {
 progress = 1;
