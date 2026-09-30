@@ -44,12 +44,10 @@ const isMobile = window.innerWidth < 768;
 const map = new maplibregl.Map({
 container: 'map',
 style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-center: [85, 0],
-zoom: isMobile ? -1.0 : 1.6,
+center: [100, -5],
+zoom: isMobile ? -1.0 : 1.45,
 renderWorldCopies: false
 });
- 
-/* disable interaction */
  
 map.scrollZoom.disable();
 map.boxZoom.disable();
@@ -65,29 +63,17 @@ map.resize();
  
 map.on('load', () => {
  
-/* force framing of the route */
- 
+if (isMobile) {
 map.fitBounds(
 [
-[-15, -60],
-[180, 60]
+[-20, -60],
+[180, 70]
 ],
 {
-padding: isMobile
-? {
-top: 20,
-bottom: 20,
-left: 20,
-right: 80
-}
-: {
-top: 40,
-bottom: 40,
-left: 40,
-right: 250
-}
+padding: 20
 }
 );
+}
  
 function forceResize() {
 map.resize();
@@ -96,6 +82,7 @@ map.resize();
 setTimeout(forceResize, 500);
 setTimeout(forceResize, 1000);
 setTimeout(forceResize, 2000);
+setTimeout(forceResize, 4000);
  
 map.addSource('route', {
 type: 'geojson',
