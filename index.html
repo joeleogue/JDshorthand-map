@@ -6,10 +6,7 @@
 
 <title>Ireland to Antipodes Islands</title>
 
-<link
-  href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css"
-  rel="stylesheet"
-/>
+<link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet">
 
 <style>
 html,
@@ -49,19 +46,12 @@ const isMobile = window.innerWidth < 768;
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-
-  center: isMobile
-    ? [95, 0]
-    : [85, 0],
-
-  zoom: isMobile
-    ? -1.0
-    : 1.6,
-
+  center: [120, 0],
+  zoom: 1,
   renderWorldCopies: false
 });
 
-/* Disable interaction */
+/* Disable all interaction */
 
 map.scrollZoom.disable();
 map.boxZoom.disable();
@@ -71,17 +61,38 @@ map.keyboard.disable();
 map.doubleClickZoom.disable();
 map.touchZoomRotate.disable();
 
-/* Help Shorthand iframe rendering */
-
 window.addEventListener('resize', () => {
   map.resize();
 });
 
 map.on('load', () => {
 
+  /* Storytelling framing */
+
+  map.fitBounds(
+    [
+      [-12, -60],
+      [180, 60]
+    ],
+    {
+      padding: isMobile
+        ? {
+            top: 30,
+            bottom: 30,
+            left: 30,
+            right: 80
+          }
+        : {
+            top: 40,
+            bottom: 40,
+            left: 50,
+            right: 350
+          }
+    }
+  );
+
   setTimeout(() => map.resize(), 500);
-  setTimeout(() => map.resize(), 1000);
-  setTimeout(() => map.resize(), 2000);
+  setTimeout(() => map.resize(), 1500);
 
   map.addSource('route', {
     type: 'geojson',
@@ -99,7 +110,7 @@ map.on('load', () => {
     type: 'line',
     source: 'route',
     paint: {
-      'line-color': '#0066CC',
+      'line-color': '#005EB8',
       'line-width': isMobile ? 4 : 5
     }
   });
@@ -142,7 +153,7 @@ map.on('load', () => {
     source: 'start',
     paint: {
       'circle-radius': 5,
-      'circle-color': '#0066CC'
+      'circle-color': '#005EB8'
     }
   });
 
@@ -206,6 +217,7 @@ map.on('load', () => {
         coordinates: head
       }
     });
+
   }
 
   let progress = 0;
@@ -226,7 +238,9 @@ map.on('load', () => {
   }
 
   animate();
+
 });
+
 </script>
 
 </body>
