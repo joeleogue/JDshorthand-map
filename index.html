@@ -4,22 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Cork to Antipodes Islands</title>
+<title>Shorthand Route Animation</title>
 
 <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet">
 
 <style>
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
 }
 
 #map {
   width: 100%;
-  height: 100vh;
+  height: 800px;
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 700px;
+  }
 }
 </style>
 </head>
@@ -45,12 +48,12 @@ const isMobile = window.innerWidth < 768;
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  center: [90, 0],
-  zoom: 2,
+  center: [85, 0],
+  zoom: isMobile ? -3.0 : 1.6,
   renderWorldCopies: false
 });
 
-/* lock map */
+/* Disable interaction */
 
 map.scrollZoom.disable();
 map.boxZoom.disable();
@@ -66,4 +69,167 @@ window.addEventListener('resize', () => {
 
 map.on('load', () => {
 
-  /* remove all 
+  /* Remove labels */
+
+  const layers = map.getStyle().layers;
+
+  layers.forEach(layer => {
+    if (
+      layer.type === 'symbol' &&
+      layer.layout &&
+      layer.layout['text-field']
+    ) {
+      map.setLayoutProperty(
+        layer.id,
+        'visibility',
+        'none'
+      );
+    }
+  });
+
+  if (isMobile) {
+    map.fitBounds(
+      [
+        [-20, -60],
+        [180, 70]
+      ],
+      {
+        padding: 20
+      }
+    );
+  }
+
+  function forceResize() {
+    map.resize();
+  }
+
+  setTimeout(forceResize, 500);
+  setTimeout(forceResize, 1000);
+  setTimeout(forceResize, 2000);
+  setTimeout(forceResize, 4000);
+
+  map.addSource('route', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: [route[0]]
+      }
+    }
+  });
+
+  map.addLayer({
+    id: 'route-line',
+    type: 'line',
+    source: 'route',
+    paint: {
+      'line-color': '#0078D4',
+      'line-width': isMobile ? 4 : 5
+    }
+  });
+
+  map.addSource('head', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: route[0]
+      }
+    }
+  });
+
+  map.addLayer({
+    id: 'head-dot',
+    type: 'circle',
+    source: 'head',
+    paint: {
+      'circle-radius': isMobile ? 6 : 8,
+      'circle-color': '#D83B01'
+    }
+  });
+
+  /* Permanent destination marker */
+
+  map.addSource('destination', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [
+          178.7671865694536,
+          -49.688154086945886
+        ]
+      }
+    }
+  });
+
+  map.addLayer({
+    id: 'destination-dot',
+    type: 'circle',
+    source: 'destination',
+    paint: {
+      'circle-radius': isMobile ? 6 : 8,
+      'circle-color': '#D83B01'
+    }
+  });
+
+  function update(progress) {
+
+    const total = route.length - 1;
+    const current = progress * total;
+
+    const seg = Math.floor(current);
+    const rem = current - seg;
+
+    let coords = route.slice(0, seg + 1);
+    let head = route[Math.min(seg, total)];
+
+    if (seg < total) {
+
+      const s = route[seg];
+      const e = route[seg + 1];
+
+      head = [
+        s[0] + (e[0] - s[0]) * rem,
+        s[1] + (e[1] - s[1]) * rem
+      ];
+
+      coords.push(head);
+
+    }
+
+    map.getSource('route').setData({
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: coords
+      }
+    });
+
+    map.getSource('head').setData({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: head
+      }
+    });
+
+  }
+
+  let progress = 0;
+
+  function animate() {
+
+    progress += 0.002;
+
+    if (progress > 1) {
+      progress = 1;
+    }
+
+    update(progress);
+
+    if (progress < 1) {
+     
