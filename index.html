@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Ireland to Antipodes Islands</title>
+<title>Cork to Antipodes Islands</title>
 
 <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet">
 
@@ -33,12 +33,17 @@ body {
 
 <script>
 
+/*
+PACIFIC-CENTRED DISPLAY ROUTE
+This keeps the destination away from the edge.
+*/
+
 const route = [
   [-8.492110492347729, 51.89346672223707],
   [20, 40],
   [80, 10],
-  [140, -20],
-  [178.7671865694536, -49.688154086945886]
+  [-220, -20],      
+  [-181.2328134305464, -49.688154086945886]
 ];
 
 const isMobile = window.innerWidth < 768;
@@ -46,12 +51,14 @@ const isMobile = window.innerWidth < 768;
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  center: [120, 0],
-  zoom: 1,
+
+  /* Pacific-centred view */
+  center: [-140, -10],
+
+  zoom: isMobile ? 1.0 : 1.8,
+
   renderWorldCopies: false
 });
-
-/* Disable all interaction */
 
 map.scrollZoom.disable();
 map.boxZoom.disable();
@@ -67,32 +74,30 @@ window.addEventListener('resize', () => {
 
 map.on('load', () => {
 
-  /* Storytelling framing */
+  setTimeout(() => map.resize(), 500);
+  setTimeout(() => map.resize(), 1000);
 
   map.fitBounds(
     [
-      [-12, -60],
-      [180, 60]
+      [-220, -60],
+      [90, 60]
     ],
     {
       padding: isMobile
         ? {
-            top: 30,
-            bottom: 30,
-            left: 30,
-            right: 80
+            top: 20,
+            bottom: 20,
+            left: 20,
+            right: 20
           }
         : {
             top: 40,
             bottom: 40,
-            left: 50,
-            right: 350
+            left: 60,
+            right: 120
           }
     }
   );
-
-  setTimeout(() => map.resize(), 500);
-  setTimeout(() => map.resize(), 1500);
 
   map.addSource('route', {
     type: 'geojson',
@@ -136,67 +141,26 @@ map.on('load', () => {
     }
   });
 
-  map.addSource('start', {
-    type: 'geojson',
-    data: {
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: route[0]
-      }
-    }
-  });
-
-  map.addLayer({
-    id: 'start-point',
-    type: 'circle',
-    source: 'start',
-    paint: {
-      'circle-radius': 5,
-      'circle-color': '#005EB8'
-    }
-  });
-
-  map.addSource('end', {
-    type: 'geojson',
-    data: {
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: route[route.length - 1]
-      }
-    }
-  });
-
-  map.addLayer({
-    id: 'end-point',
-    type: 'circle',
-    source: 'end',
-    paint: {
-      'circle-radius': 5,
-      'circle-color': '#D83B01'
-    }
-  });
-
   function update(progress) {
 
     const total = route.length - 1;
     const current = progress * total;
 
-    const seg = Math.floor(current);
-    const rem = current - seg;
+    const segment = Math.floor(current);
+    const remainder = current - segment;
 
-    let coords = route.slice(0, seg + 1);
-    let head = route[Math.min(seg, total)];
+    let coords = route.slice(0, segment + 1);
 
-    if (seg < total) {
+    let head = route[Math.min(segment, total)];
 
-      const start = route[seg];
-      const end = route[seg + 1];
+    if (segment < total) {
+
+      const start = route[segment];
+      const end = route[segment + 1];
 
       head = [
-        start[0] + (end[0] - start[0]) * rem,
-        start[1] + (end[1] - start[1]) * rem
+        start[0] + (end[0] - start[0]) * remainder,
+        start[1] + (end[1] - start[1]) * remainder
       ];
 
       coords.push(head);
@@ -217,7 +181,6 @@ map.on('load', () => {
         coordinates: head
       }
     });
-
   }
 
   let progress = 0;
@@ -240,7 +203,6 @@ map.on('load', () => {
   animate();
 
 });
-
 </script>
 
 </body>
