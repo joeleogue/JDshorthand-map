@@ -50,4 +50,172 @@ const route = [
     [140.0, -32.0],
     [155.0, -40.0],
     [168.0, -46.0],
-    
+    [175.0, -48.5],
+    [178.7672, -49.6882] // Antipodes Islands
+];
+
+const bounds = [
+    [-15, -55],
+    [180, 60]
+];
+
+const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+        version: 8,
+        sources: {
+            osm: {
+                type: 'raster',
+                tiles: [
+                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                ],
+                tileSize: 256
+            }
+        },
+        layers: [
+            {
+                id: 'background',
+                type: 'background',
+                paint: {
+                    'background-color': '#edf2f5'
+                }
+            },
+            {
+                id: 'osm',
+                type: 'raster',
+                source: 'osm'
+            }
+        ]
+    },
+    attributionControl: false,
+    renderWorldCopies: false
+});
+
+map.scrollZoom.disable();
+map.boxZoom.disable();
+map.dragPan.disable();
+map.dragRotate.disable();
+map.touchZoomRotate.disable();
+map.doubleClickZoom.disable();
+map.keyboard.disable();
+
+map.on('load', () => {
+
+    map.fitBounds(bounds, {
+        padding: 20,
+        duration: 0
+    });
+
+    map.addSource('route', {
+        type: 'geojson',
+        data: {
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: [route[0]]
+            }
+        }
+    });
+
+    map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        paint: {
+            'line-color': '#005EB8',
+            'line-width': 5,
+            'line-opacity': 1
+        }
+    });
+
+    map.addSource('head', {
+        type: 'geojson',
+        data: {
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: route[0]
+            }
+        }
+    });
+
+    map.addLayer({
+        id: 'head-dot',
+        type: 'circle',
+        source: 'head',
+        paint: {
+            'circle-radius': 8,
+            'circle-color': '#D83B01',
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2
+        }
+    });
+
+    function update(progress) {
+
+        const total = route.length - 1;
+        const current = progress * total;
+
+        const seg = Math.floor(current);
+        const rem = current - seg;
+
+        let coords = route.slice(0, seg + 1);
+        let head = route[Math.min(seg, total)];
+
+        if (seg < total) {
+
+            const start = route[seg];
+            const end = route[seg + 1];
+
+            head = [
+                start[0] + (end[0] - start[0]) * rem,
+                start[1] + (end[1] - start[1]) * rem
+            ];
+
+            coords.push(head);
+        }
+
+        map.getSource('route').setData({
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: coords
+            }
+        });
+
+        map.getSource('head').setData({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: head
+            }
+        });
+
+    }
+
+    let progress = 0;
+
+    function animate() {
+
+        progress += 0.0010;
+
+        if (progress > 1) {
+            progress = 1;
+        }
+
+        update(progress);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+
+    }
+
+    animate();
+
+});
+
+</script>
+
+</body>
+</html>
