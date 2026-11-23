@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>Cork to Antipodes Islands</title>
+<title>Shorthand Route Animation</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet">
 
 <style>
 html, body {
@@ -19,12 +19,10 @@ html, body {
   height: 800px;
 }
 
-.destination-label {
-  background: rgba(255,255,255,0.9);
-  border: none;
-  padding: 4px 8px;
-  font-family: Arial, sans-serif;
-  font-weight: bold;
+@media (max-width: 768px) {
+  #map {
+    height: 700px;
+  }
 }
 </style>
 </head>
@@ -33,72 +31,172 @@ html, body {
 
 <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
 
 <script>
 
 const route = [
-  [51.8935,-8.4921],   // Cork
-  [48,-5],
-  [40,10],
-  [30,25],
-  [18,50],
-  [5,75],
-  [-10,95],
-  [-22,120],
-  [-35,145],
-  [-45,165],
-  [-49.6882,178.7672]  // Antipodes Islands
+  [-8.492110492347729, 51.89346672223707],
+  [20, 40],
+  [80, 10],
+  [140, -20],
+  [178.7671865694536, -49.688154086945886]
 ];
 
-const map = L.map('map', {
-  zoomControl: false,
-  dragging: false,
-  scrollWheelZoom: false,
-  doubleClickZoom: false,
-  boxZoom: false,
-  keyboard: false,
-  touchZoom: false
+const isMobile = window.innerWidth < 768;
+
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  center: [85, 0],
+  zoom: isMobile ? -3.0 : 1.6,
+  renderWorldCopies: false
 });
 
-L.tileLayer(
-'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-{
-  attribution: '&copy; OpenStreetMap &copy; CARTO'
-}
-).addTo(map);
+map.scrollZoom.disable();
+map.boxZoom.disable();
+map.dragPan.disable();
+map.dragRotate.disable();
+map.keyboard.disable();
+map.doubleClickZoom.disable();
+map.touchZoomRotate.disable();
 
-const polyline = L.polyline([], {
-  color: '#0078D4',
-  weight: 4
-}).addTo(map);
-
-const marker = L.circleMarker(route[0], {
-  radius: 8,
-  color: '#D83B01',
-  fillColor: '#D83B01',
-  fillOpacity: 1
-}).addTo(map);
-
-map.fitBounds(route, {
-  padding: [50,50]
+window.addEventListener('resize', () => {
+  map.resize();
 });
 
-let progress = 0;
+map.on('load', () => {
 
-function interpolate(a, b, t) {
-  return [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t
-  ];
-}
+  if (isMobile) {
+    map.fitBounds(
+      [
+        [-20, -60],
+        [180, 70]
+      ],
+      {
+        padding: 20
+      }
+    );
+  }
 
-function animate() {
+  function forceResize() {
+    map.resize();
+  }
 
-  progress += 0.002;
+  setTimeout(forceResize, 500);
+  setTimeout(forceResize, 1000);
+  setTimeout(forceResize, 2000);
+  setTimeout(forceResize, 4000);
 
-  const total = route.length - 1;
-  const current = progress * total;
+  map.addSource('route', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: [route[0]]
+      }
+    }
+  });
 
-  const segment = Math.floor(current);
-  const remainder = current
+  map.addLayer({
+    id: 'route-line',
+    type: 'line',
+    source: 'route',
+    paint: {
+      'line-color': '#0078D4',
+      'line-width': isMobile ? 4 : 5
+    }
+  });
+
+  map.addSource('head', {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: route[0]
+      }
+    }
+  });
+
+  map.addLayer({
+    id: 'head-dot',
+    type: 'circle',
+    source: 'head',
+    paint: {
+      'circle-radius': isMobile ? 6 : 8,
+      'circle-color': '#D83B01'
+    }
+  });
+
+  function update(progress) {
+
+    const total = route.length - 1;
+    const current = progress * total;
+
+    const seg = Math.floor(current);
+    const rem = current - seg;
+
+    let coords = route.slice(0, seg + 1);
+    let head = route[Math.min(seg, total)];
+
+    if (seg < total) {
+
+      const s = route[seg];
+      const e = route[seg + 1];
+
+      head = [
+        s[0] + (e[0] - s[0]) * rem,
+        s[1] + (e[1] - s[1]) * rem
+      ];
+
+      coords.push(head);
+
+    }
+
+    map.getSource('route').setData({
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: coords
+      }
+    });
+
+    map.getSource('head').setData({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: head
+      }
+    });
+
+  }
+
+  let progress = 0;
+
+  function animate() {
+
+    progress += 0.002;
+
+    if (progress > 1) {
+      progress = 1;
+    }
+
+    update(progress);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+
+  }
+
+  animate();
+
+});
+
+</script>
+
+</body>
+</html>
+``
