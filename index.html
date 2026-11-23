@@ -1,56 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Shorthand Route Animation</title>
-
-<link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet">
-
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-}
-
-#map {
-  width: 100%;
-  height: 800px;
-}
-
-@media (max-width: 768px) {
-  #map {
-    height: 700px;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<div id="map"></div>
-
-<script src="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.js"></script>
-
 <script>
 
 const route = [
-  [-8.492110492347729, 51.89346672223707],
-  [20, 40],
-  [80, 10],
-  [140, -20],
-  [178.7671865694536, -49.688154086945886]
-];
+  [-8.4921, 51.8935],   // Cork
 
-const isMobile = window.innerWidth < 768;
+  [-7.0, 50.0],
+  [-5.0, 48.5],
+  [-2.0, 46.0],
+  [2.0, 43.0],
+
+  [10.0, 38.0],
+  [18.0, 33.0],
+  [28.0, 28.0],
+
+  [38.0, 20.0],
+  [48.0, 13.0],
+  [58.0, 7.0],
+
+  [68.0, 1.0],
+  [78.0, -5.0],
+  [88.0, -10.0],
+
+  [98.0, -15.0],
+  [108.0, -20.0],
+  [118.0, -25.0],
+
+  [128.0, -30.0],
+  [138.0, -35.0],
+  [148.0, -40.0],
+
+  [158.0, -44.0],
+  [168.0, -47.0],
+  [174.0, -48.5],
+
+  [178.7672, -49.6882]  // Antipodes Islands
+];
 
 const map = new maplibregl.Map({
   container: 'map',
   style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-  center: [85, 0],
-  zoom: isMobile ? -3.0 : 1.6,
-  renderWorldCopies: false
+  renderWorldCopies: false,
+  attributionControl: true
 });
 
 map.scrollZoom.disable();
@@ -61,32 +50,18 @@ map.keyboard.disable();
 map.doubleClickZoom.disable();
 map.touchZoomRotate.disable();
 
-window.addEventListener('resize', () => {
-  map.resize();
-});
-
 map.on('load', () => {
 
-  if (isMobile) {
-    map.fitBounds(
-      [
-        [-20, -60],
-        [180, 70]
-      ],
-      {
-        padding: 20
-      }
-    );
-  }
+  const bounds = new maplibregl.LngLatBounds();
 
-  function forceResize() {
-    map.resize();
-  }
+  route.forEach(coord => {
+    bounds.extend(coord);
+  });
 
-  setTimeout(forceResize, 500);
-  setTimeout(forceResize, 1000);
-  setTimeout(forceResize, 2000);
-  setTimeout(forceResize, 4000);
+  map.fitBounds(bounds, {
+    padding: window.innerWidth < 768 ? 30 : 80,
+    duration: 0
+  });
 
   map.addSource('route', {
     type: 'geojson',
@@ -105,7 +80,8 @@ map.on('load', () => {
     source: 'route',
     paint: {
       'line-color': '#0078D4',
-      'line-width': isMobile ? 4 : 5
+      'line-width': window.innerWidth < 768 ? 4 : 5,
+      'line-opacity': 0.95
     }
   });
 
@@ -125,7 +101,7 @@ map.on('load', () => {
     type: 'circle',
     source: 'head',
     paint: {
-      'circle-radius': isMobile ? 6 : 8,
+      'circle-radius': 7,
       'circle-color': '#D83B01'
     }
   });
@@ -139,20 +115,20 @@ map.on('load', () => {
     const rem = current - seg;
 
     let coords = route.slice(0, seg + 1);
+
     let head = route[Math.min(seg, total)];
 
     if (seg < total) {
 
-      const s = route[seg];
-      const e = route[seg + 1];
+      const start = route[seg];
+      const end = route[seg + 1];
 
       head = [
-        s[0] + (e[0] - s[0]) * rem,
-        s[1] + (e[1] - s[1]) * rem
+        start[0] + (end[0] - start[0]) * rem,
+        start[1] + (end[1] - start[1]) * rem
       ];
 
       coords.push(head);
-
     }
 
     map.getSource('route').setData({
@@ -170,14 +146,13 @@ map.on('load', () => {
         coordinates: head
       }
     });
-
   }
 
   let progress = 0;
 
   function animate() {
 
-    progress += 0.002;
+    progress += 0.001;
 
     if (progress > 1) {
       progress = 1;
@@ -188,15 +163,9 @@ map.on('load', () => {
     if (progress < 1) {
       requestAnimationFrame(animate);
     }
-
   }
 
   animate();
-
 });
 
 </script>
-
-</body>
-</html>
-``
