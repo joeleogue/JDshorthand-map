@@ -1,39 +1,33 @@
 <script>
 
 const route = [
-  [-8.4921, 51.8935],   // Cork
-
+  [-8.4921, 51.8935],
   [-7.0, 50.0],
   [-5.0, 48.5],
   [-2.0, 46.0],
   [2.0, 43.0],
-
   [10.0, 38.0],
   [18.0, 33.0],
   [28.0, 28.0],
-
   [38.0, 20.0],
   [48.0, 13.0],
   [58.0, 7.0],
-
   [68.0, 1.0],
   [78.0, -5.0],
   [88.0, -10.0],
-
   [98.0, -15.0],
   [108.0, -20.0],
   [118.0, -25.0],
-
   [128.0, -30.0],
   [138.0, -35.0],
   [148.0, -40.0],
-
   [158.0, -44.0],
   [168.0, -47.0],
   [174.0, -48.5],
-
-  [178.7672, -49.6882]  // Antipodes Islands
+  [178.7672, -49.6882]
 ];
+
+const isMobile = window.innerWidth < 768;
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -50,6 +44,10 @@ map.keyboard.disable();
 map.doubleClickZoom.disable();
 map.touchZoomRotate.disable();
 
+window.addEventListener('resize', () => {
+  map.resize();
+});
+
 map.on('load', () => {
 
   const bounds = new maplibregl.LngLatBounds();
@@ -59,7 +57,7 @@ map.on('load', () => {
   });
 
   map.fitBounds(bounds, {
-    padding: window.innerWidth < 768 ? 30 : 80,
+    padding: isMobile ? 25 : 80,
     duration: 0
   });
 
@@ -80,7 +78,7 @@ map.on('load', () => {
     source: 'route',
     paint: {
       'line-color': '#0078D4',
-      'line-width': window.innerWidth < 768 ? 4 : 5,
+      'line-width': isMobile ? 4 : 5,
       'line-opacity': 0.95
     }
   });
@@ -101,8 +99,73 @@ map.on('load', () => {
     type: 'circle',
     source: 'head',
     paint: {
-      'circle-radius': 7,
-      'circle-color': '#D83B01'
+      'circle-radius': isMobile ? 6 : 8,
+      'circle-color': '#D83B01',
+      'circle-opacity': 1,
+      'circle-opacity-transition': {
+        duration: 1200
+      }
+    }
+  });
+
+  map.addSource('destination-label', {
+    type: 'geojson',
+    data: {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [178.7672, -49.6882]
+        },
+        properties: {
+          title: 'ANTIPODES ISLANDS',
+          subtitle: 'New Zealand'
+        }
+      }]
+    }
+  });
+
+  map.addLayer({
+    id: 'destination-title',
+    type: 'symbol',
+    source: 'destination-label',
+    layout: {
+      'text-field': ['get', 'title'],
+      'text-size': 18,
+      'text-font': ['Open Sans Bold'],
+      'text-anchor': 'top',
+      'text-offset': [0, 1.2]
+    },
+    paint: {
+      'text-color': '#111111',
+      'text-halo-color': '#ffffff',
+      'text-halo-width': 2,
+      'text-opacity': 0,
+      'text-opacity-transition': {
+        duration: 1500
+      }
+    }
+  });
+
+  map.addLayer({
+    id: 'destination-subtitle',
+    type: 'symbol',
+    source: 'destination-label',
+    layout: {
+      'text-field': ['get', 'subtitle'],
+      'text-size': 13,
+      'text-anchor': 'top',
+      'text-offset': [0, 3]
+    },
+    paint: {
+      'text-color': '#666666',
+      'text-halo-color': '#ffffff',
+      'text-halo-width': 2,
+      'text-opacity': 0,
+      'text-opacity-transition': {
+        duration: 1500
+      }
     }
   });
 
@@ -146,26 +209,51 @@ map.on('load', () => {
         coordinates: head
       }
     });
+
   }
 
   let progress = 0;
+  let completed = false;
 
   function animate() {
 
     progress += 0.001;
 
-    if (progress > 1) {
+    if (progress >= 1 && !completed) {
+
       progress = 1;
+      completed = true;
+
+      update(progress);
+
+      map.setPaintProperty(
+        'head-dot',
+        'circle-opacity',
+        0
+      );
+
+      map.setPaintProperty(
+        'destination-title',
+        'text-opacity',
+        1
+      );
+
+      map.setPaintProperty(
+        'destination-subtitle',
+        'text-opacity',
+        1
+      );
+
+      return;
     }
 
     update(progress);
 
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    }
+    requestAnimationFrame(animate);
   }
 
   animate();
+
 });
 
 </script>
