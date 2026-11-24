@@ -90,7 +90,9 @@ const map = new maplibregl.Map({
     attributionControl: false,
     renderWorldCopies: false
 });
-
+window.addEventListener('resize', () => {
+    map.resize();
+});
 map.scrollZoom.disable();
 map.boxZoom.disable();
 map.dragPan.disable();
@@ -100,6 +102,10 @@ map.doubleClickZoom.disable();
 map.keyboard.disable();
 
 map.on('load', () => {
+
+    setTimeout(() => map.resize(), 500);
+    setTimeout(() => map.resize(), 1000);
+    setTimeout(() => map.resize(), 2000);
 
     map.fitBounds(bounds, {
         padding: 20,
